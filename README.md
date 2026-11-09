@@ -20,14 +20,19 @@ flowchart LR
 
 Everything runs on your machine, in one process, for the length of one command. There is no daemon and no server. A write lands in SQLite first and the calendar call happens afterwards, so losing the network costs you a reminder, never a record.
 
-## Install
+## Build and install
+
+Run these yourself (the `!` prefix drops the output into this conversation so I can fix what breaks):
 
 ```sh
-go mod tidy
-go build -o qarz ./cmd/qarz
+! cd /Users/khizerrehandev/orca/projects/QarzSystem && go mod tidy && go build -o qarz ./cmd/qarz
 ```
 
-Put the resulting binary somewhere on your `PATH`.
+Then either `./qarz setup` from the repo, or put it on your `PATH`:
+
+```sh
+! cp /Users/khizerrehandev/orca/projects/QarzSystem/qarz /usr/local/bin/qarz
+```
 
 ## First run
 
