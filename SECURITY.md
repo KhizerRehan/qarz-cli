@@ -1,6 +1,6 @@
 # Security Policy
 
-qarz stores personal financial records and a Google OAuth refresh token on your machine, so security reports are taken seriously.
+qarz stores personal financial records on your machine, so security reports are taken seriously.
 
 ## Supported versions
 
@@ -26,19 +26,15 @@ You can expect an acknowledgement within 7 days. Once the issue is confirmed, a 
 
 ## What is in scope
 
-- Exposure of the ledger (`~/.qarz/qarz.db`), the OAuth client (`~/.qarz/credentials.json`) or the token (`~/.qarz/token.json`), for example through wrong file permissions
-- Flaws in the local OAuth sign-in flow (redirect listener, state validation, token handling)
-- qarz reading, changing or deleting calendar events it did not create
-- Anything that lets data leave the machine other than the calendar events qarz is meant to write
+- Exposure of the ledger (`~/.qarz/qarz.db`) or the settings (`~/.qarz/config.toml`), for example through wrong file permissions
+- Anything that lets data leave the machine; qarz makes no network calls
 
 ## What is out of scope
 
 - Someone who already has access to your user account reading files in your home directory
-- Vulnerabilities in Google's services themselves
-- Leaks caused by sharing your own `credentials.json` or `token.json`
+- Leaks caused by sharing your own ledger file
 
 ## Keeping your data safe
 
-- qarz asks Google for the `calendar` scope only.
-- The files in `~/.qarz/` are written readable by you alone. Keep them that way, and never commit them or share them.
-- To revoke qarz's access, remove it at <https://myaccount.google.com/permissions> and delete `~/.qarz/token.json`.
+- The `~/.qarz/` directory is created readable by you alone. Keep it that way, and never commit or share the files in it.
+- Earlier builds that projected loans onto Google Calendar left `~/.qarz/credentials.json` and `~/.qarz/token.json` behind. qarz no longer reads them: revoke its access at <https://myaccount.google.com/permissions> and delete both files.

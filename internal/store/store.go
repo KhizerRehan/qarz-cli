@@ -46,13 +46,68 @@ func Migrate(ctx context.Context, db *sql.DB) error {
 	if _, err := db.ExecContext(ctx, schema); err != nil {
 		return fmt.Errorf("apply schema: %w", err)
 	}
+	return dropCalendarColumns(ctx, db)
+}
+
+func dropCalendarColumns(ctx context.Context, db *sql.DB) error {
+	conn, err := db.Conn(ctx)
+	if err != nil {
+		return fmt.Errorf("drop calendar columns: %w", err)
+	}
+	defer conn.Close()
+
+	var present int
+	if err := conn.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM pragma_table_info('loans') WHERE name = 'sync_state'`).Scan(&present); err != nil {
+		return fmt.Errorf("drop calendar columns: %w", err)
+	}
+	if present == 0 {
+		return nil
+	}
+
+	if _, err := conn.ExecContext(ctx, `PRAGMA foreign_keys = OFF`); err != nil {
+		return fmt.Errorf("drop calendar columns: %w", err)
+	}
+	defer func() { _, _ = conn.ExecContext(context.Background(), `PRAGMA foreign_keys = ON`) }()
+
+	tx, err := conn.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("drop calendar columns: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	steps := []string{
+		fmt.Sprintf(loansTable, "loans_rebuilt"),
+		`INSERT INTO loans_rebuilt (` + loanCarriedColumns + `)
+		 SELECT ` + loanCarriedColumns + ` FROM loans`,
+		`DROP TABLE loans`,
+		`ALTER TABLE loans_rebuilt RENAME TO loans`,
+	}
+	for _, step := range steps {
+		if _, err := tx.ExecContext(ctx, step); err != nil {
+			return fmt.Errorf("drop calendar columns: %w", err)
+		}
+	}
+
+	violations, err := tx.QueryContext(ctx, `PRAGMA foreign_key_check`)
+	if err != nil {
+		return fmt.Errorf("drop calendar columns: %w", err)
+	}
+	broken := violations.Next()
+	violations.Close()
+	if broken {
+		return errors.New("drop calendar columns: repayments would lose their loan; ledger left unchanged")
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("drop calendar columns: %w", err)
+	}
 	return nil
 }
 
 const loanColumns = `
   l.id, l.qarz_uid, l.borrower, l.principal_minor, l.lent_on, l.due_on,
   COALESCE(l.note, ''), COALESCE(l.metadata, ''), COALESCE(l.voided_at, ''),
-  COALESCE(l.calendar_event_id, ''), l.sync_state,
   COALESCE(SUM(r.amount_minor), 0)`
 
 func InsertLoan(ctx context.Context, db *sql.DB, l loan.Loan, now time.Time) (int64, error) {
@@ -60,18 +115,14 @@ func InsertLoan(ctx context.Context, db *sql.DB, l loan.Loan, now time.Time) (in
 	if err != nil {
 		return 0, err
 	}
-	state := l.SyncState
-	if state == "" {
-		state = loan.SyncPendingCreate
-	}
 	stamp := timestamp(now)
 
 	res, err := db.ExecContext(ctx, `
 		INSERT INTO loans (qarz_uid, borrower, principal_minor, lent_on, due_on,
-		                   note, metadata, sync_state, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		                   note, metadata, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		l.UID, l.Borrower, int64(l.PrincipalMinor), l.LentOn.String(), l.DueOn.String(),
-		nullable(l.Note), nullable(metadata), string(state), stamp, stamp)
+		nullable(l.Note), nullable(metadata), stamp, stamp)
 	if err != nil {
 		return 0, fmt.Errorf("record loan: %w", err)
 	}
@@ -174,16 +225,6 @@ func ListRepayments(ctx context.Context, db *sql.DB, loanID int64) ([]loan.Repay
 	return out, nil
 }
 
-func MarkSyncState(ctx context.Context, db *sql.DB, id int64, state loan.SyncState, eventID string, now time.Time) error {
-	_, err := db.ExecContext(ctx, `
-		UPDATE loans SET sync_state = ?, calendar_event_id = ?, updated_at = ?
-		WHERE id = ?`, string(state), nullable(eventID), timestamp(now), id)
-	if err != nil {
-		return fmt.Errorf("update sync state of loan %d: %w", id, err)
-	}
-	return nil
-}
-
 type scanner interface {
 	Scan(dest ...any) error
 }
@@ -196,18 +237,15 @@ func scanLoanRow(src scanner, today loan.Date) (LoanRow, error) {
 		lentOn    string
 		dueOn     string
 		metadata  string
-		state     string
 	)
 
 	err := src.Scan(&row.Loan.ID, &row.Loan.UID, &row.Loan.Borrower, &principal,
-		&lentOn, &dueOn, &row.Loan.Note, &metadata, &row.Loan.VoidedAt,
-		&row.Loan.CalendarEventID, &state, &repaid)
+		&lentOn, &dueOn, &row.Loan.Note, &metadata, &row.Loan.VoidedAt, &repaid)
 	if err != nil {
 		return LoanRow{}, err
 	}
 
 	row.Loan.PrincipalMinor = loan.Minor(principal)
-	row.Loan.SyncState = loan.SyncState(state)
 	if row.Loan.LentOn, err = loan.ParseDate(lentOn); err != nil {
 		return LoanRow{}, err
 	}
@@ -272,26 +310,4 @@ func nullable(s string) any {
 
 func timestamp(t time.Time) string {
 	return t.UTC().Format(time.RFC3339)
-}
-
-func PendingLoanIDs(ctx context.Context, db *sql.DB) ([]int64, error) {
-	rows, err := db.QueryContext(ctx, `
-		SELECT id FROM loans WHERE sync_state <> ? ORDER BY id ASC`, string(loan.SyncSynced))
-	if err != nil {
-		return nil, fmt.Errorf("list loans awaiting the calendar: %w", err)
-	}
-	defer rows.Close()
-
-	var out []int64
-	for rows.Next() {
-		var id int64
-		if err := rows.Scan(&id); err != nil {
-			return nil, fmt.Errorf("list loans awaiting the calendar: %w", err)
-		}
-		out = append(out, id)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("list loans awaiting the calendar: %w", err)
-	}
-	return out, nil
 }

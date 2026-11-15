@@ -1,7 +1,9 @@
 package store
 
-const schema = `
-CREATE TABLE IF NOT EXISTS loans (
+import "fmt"
+
+const loansTable = `
+CREATE TABLE IF NOT EXISTS %s (
   id                INTEGER PRIMARY KEY AUTOINCREMENT,
   qarz_uid          TEXT    NOT NULL UNIQUE,
   borrower          TEXT    NOT NULL,
@@ -11,14 +13,13 @@ CREATE TABLE IF NOT EXISTS loans (
   note              TEXT,
   metadata          TEXT,
   voided_at         TEXT,
-  calendar_event_id TEXT,
-  sync_state        TEXT    NOT NULL CHECK (sync_state IN
-                      ('synced','pending_create','pending_update','pending_delete')),
   created_at        TEXT    NOT NULL,
   updated_at        TEXT    NOT NULL,
   CHECK (due_on >= lent_on)
 );
+`
 
+var schema = fmt.Sprintf(loansTable, "loans") + `
 CREATE TABLE IF NOT EXISTS repayments (
   id           INTEGER PRIMARY KEY AUTOINCREMENT,
   loan_id      INTEGER NOT NULL REFERENCES loans(id),
@@ -29,3 +30,6 @@ CREATE TABLE IF NOT EXISTS repayments (
 
 CREATE INDEX IF NOT EXISTS idx_repayments_loan_id ON repayments(loan_id);
 `
+
+const loanCarriedColumns = `id, qarz_uid, borrower, principal_minor, lent_on, due_on,
+  note, metadata, voided_at, created_at, updated_at`

@@ -13,4 +13,4 @@
 - [ ] Golden files were regenerated with `-update` and the diff reviewed, if output changed
 - [ ] The README is updated, if user-facing behaviour changed
 - [ ] A line is added under `Unreleased` in `CHANGELOG.md`
-- [ ] The ledger is still the only source of truth: nothing is read back from the calendar, nothing is deleted, money stays integer
+- [ ] The ledger is still the only source of truth: it stays local, nothing is deleted, money stays integer
