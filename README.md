@@ -1,5 +1,10 @@
 # qarz
 
+[![ci](https://github.com/KhizerRehan/qarz-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/KhizerRehan/qarz-cli/actions/workflows/ci.yml)
+[![release](https://img.shields.io/github/v/release/KhizerRehan/qarz-cli)](https://github.com/KhizerRehan/qarz-cli/releases/latest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/KhizerRehan/qarz-cli)](https://goreportcard.com/report/github.com/KhizerRehan/qarz-cli)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A command-line ledger for interest-free loans you have made, projected one-way onto your Google Calendar so due dates arrive on their own.
 
 The ledger is the only source of truth. The calendar is a projection of it and is never read back as authority: if the two disagree, the ledger wins. Money is stored as integer paisa, balances are derived on every read, and nothing is ever deleted.
@@ -20,19 +25,25 @@ flowchart LR
 
 Everything runs on your machine, in one process, for the length of one command. There is no daemon and no server. A write lands in SQLite first and the calendar call happens afterwards, so losing the network costs you a reminder, never a record.
 
-## Build and install
+## Install
 
-Run these yourself (the `!` prefix drops the output into this conversation so I can fix what breaks):
+**Prebuilt binary.** Download the archive for your platform from the [latest release](https://github.com/KhizerRehan/qarz-cli/releases/latest), extract it, and put `qarz` somewhere on your `PATH`.
 
-```sh
-! cd /Users/khizerrehandev/orca/projects/QarzSystem && go mod tidy && go build -o qarz ./cmd/qarz
-```
-
-Then either `./qarz setup` from the repo, or put it on your `PATH`:
+**With Go.** If you have Go installed:
 
 ```sh
-! cp /Users/khizerrehandev/orca/projects/QarzSystem/qarz /usr/local/bin/qarz
+go install github.com/KhizerRehan/qarz-cli/cmd/qarz@latest
 ```
+
+**From source.**
+
+```sh
+git clone https://github.com/KhizerRehan/qarz-cli.git
+cd qarz-cli
+go build -o qarz ./cmd/qarz
+```
+
+Check it works with `qarz --version`.
 
 ## First run
 
@@ -43,6 +54,10 @@ qarz setup
 This walks the Google steps only you can do — creating a cloud project, enabling the Calendar API, configuring the consent screen, and producing a desktop OAuth client — then signs you in and writes your settings. It stops between steps and validates what you paste.
 
 The ledger works before you ever run this. Without Google access every command still records and reads loans; it just warns that no calendar event was made.
+
+Each person creates their own Google OAuth client, so qarz ships no shared secret and no one else's project ever sees your calendar.
+
+> **Sign-in expiring after a week?** While your OAuth consent screen is in *Testing* mode, Google expires refresh tokens after 7 days. Either run `qarz setup` again when that happens, or publish the consent screen (APIs & Services, OAuth consent screen, Publish app). For a personal app used only by you, publishing does not require Google's verification, though Google will show an "unverified app" warning at sign-in that you can click through.
 
 ## Commands
 
@@ -161,6 +176,8 @@ Every event is stamped with a private tag unique to its loan. That tag is how qa
 | `~/.qarz/credentials.json` | Your Google desktop OAuth client, owner-readable only. |
 | `~/.qarz/token.json` | Your Google refresh token, owner-readable only. |
 
+The defaults are a Pakistani setup (`Asia/Karachi`, `PKR`). `qarz setup` asks for all three, or edit the file directly:
+
 ```toml
 calendar_id = "primary"
 timezone = "Asia/Karachi"
@@ -171,11 +188,22 @@ currency = "PKR"
 
 No interest, markup, or late fees — a qarz is interest-free by definition, so the balance is always the principal minus what has been repaid. It tracks only loans you made, not money you owe. One person, one machine, one ledger file. Nothing is read back from Google as truth, so an event edited by hand there will be rewritten.
 
+## Privacy
+
+Everything stays on your machine. qarz asks Google for the `calendar` scope only, writes one event per loan to the calendar you choose, and sends nothing anywhere else: no telemetry, no analytics, no server of its own. To revoke access, remove qarz at <https://myaccount.google.com/permissions> and delete `~/.qarz/token.json`.
+
 ## Tests
 
 ```sh
-go test ./... -update   # first run, to create the golden files
 go test ./...
 ```
 
-Tests run at two seams: the command line, driven against a temporary ledger and an in-memory calendar, and the domain arithmetic as table tests. Nothing in the suite touches the network.
+Tests run at two seams: the command line, driven against a temporary ledger and an in-memory calendar, and the domain arithmetic as table tests. Nothing in the suite touches the network. When you change command output on purpose, regenerate the golden files with `go test ./internal/cli -update` and review the diff.
+
+## Contributing
+
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) to get started, and the [GLOSSARY](GLOSSARY.md) for the words the code uses. Please follow the [Code of Conduct](CODE_OF_CONDUCT.md), and report security issues privately as described in [SECURITY.md](SECURITY.md).
+
+## License
+
+[MIT](LICENSE)
