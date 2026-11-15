@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"qarz/internal/projection"
-	"qarz/internal/store"
+	"github.com/KhizerRehan/qarz-cli/internal/projection"
+	"github.com/KhizerRehan/qarz-cli/internal/store"
 )
 
 func newSyncCommand(app *App) *cobra.Command {

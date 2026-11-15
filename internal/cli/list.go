@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"qarz/internal/store"
+	"github.com/KhizerRehan/qarz-cli/internal/store"
 )
 
 func newListCommand(app *App) *cobra.Command {

@@ -10,8 +10,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"qarz/internal/projection"
-	"qarz/internal/loan"
+	"github.com/KhizerRehan/qarz-cli/internal/loan"
+	"github.com/KhizerRehan/qarz-cli/internal/projection"
 )
 
 type App struct {

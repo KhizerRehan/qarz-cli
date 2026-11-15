@@ -6,17 +6,17 @@ import (
 	"sort"
 	"sync"
 
-	"qarz/internal/projection"
+	"github.com/KhizerRehan/qarz-cli/internal/projection"
 )
 
 type Fake struct {
-	mu       sync.Mutex
-	events   map[string]projection.Event
-	next     int
-	Failure  error
-	Creates  int
-	Updates  int
-	Deletes  int
+	mu      sync.Mutex
+	events  map[string]projection.Event
+	next    int
+	Failure error
+	Creates int
+	Updates int
+	Deletes int
 }
 
 func NewFake() *Fake {

@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"qarz/internal/loan"
-	"qarz/internal/store"
+	"github.com/KhizerRehan/qarz-cli/internal/loan"
+	"github.com/KhizerRehan/qarz-cli/internal/store"
 )
 
 func newAddCommand(app *App) *cobra.Command {

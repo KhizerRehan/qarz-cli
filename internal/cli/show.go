@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"qarz/internal/store"
+	"github.com/KhizerRehan/qarz-cli/internal/store"
 )
 
 func newShowCommand(app *App) *cobra.Command {

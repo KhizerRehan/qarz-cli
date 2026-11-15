@@ -12,11 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"qarz/internal/cli"
-	"qarz/internal/loan"
-	"qarz/internal/projection"
-	"qarz/internal/projectiontest"
-	"qarz/internal/store"
+	"github.com/KhizerRehan/qarz-cli/internal/cli"
+	"github.com/KhizerRehan/qarz-cli/internal/loan"
+	"github.com/KhizerRehan/qarz-cli/internal/projection"
+	"github.com/KhizerRehan/qarz-cli/internal/projectiontest"
+	"github.com/KhizerRehan/qarz-cli/internal/store"
 )
 
 var update = flag.Bool("update", false, "rewrite the golden files from the current output")

@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	"qarz/internal/loan"
-	"qarz/internal/store"
+	"github.com/KhizerRehan/qarz-cli/internal/loan"
+	"github.com/KhizerRehan/qarz-cli/internal/store"
 )
 
 func Desired(row store.LoanRow, today loan.Date, currency string) (Event, bool) {

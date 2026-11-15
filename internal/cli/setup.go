@@ -9,8 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"qarz/internal/config"
-	"qarz/internal/gauth"
+	"github.com/KhizerRehan/qarz-cli/internal/config"
+	"github.com/KhizerRehan/qarz-cli/internal/gauth"
 )
 
 func newSetupCommand(app *App) *cobra.Command {

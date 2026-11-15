@@ -1,4 +1,4 @@
-module qarz
+module github.com/KhizerRehan/qarz-cli
 
 go 1.26
 

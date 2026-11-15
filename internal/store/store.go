@@ -10,7 +10,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"qarz/internal/loan"
+	"github.com/KhizerRehan/qarz-cli/internal/loan"
 )
 
 var ErrNotFound = errors.New("no loan with that number")

@@ -3,7 +3,7 @@ package projection
 import (
 	"context"
 
-	"qarz/internal/loan"
+	"github.com/KhizerRehan/qarz-cli/internal/loan"
 )
 
 const (
@@ -11,9 +11,9 @@ const (
 	MarkerKey   = "qarz"
 	MarkerValue = "1"
 
-	SlotHour          = 9
-	SlotMinutes       = 15
-	RemindDayBefore   = 24 * 60
+	SlotHour            = 9
+	SlotMinutes         = 15
+	RemindDayBefore     = 24 * 60
 	RemindShortlyBefore = 10
 )
 

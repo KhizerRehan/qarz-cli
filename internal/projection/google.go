@@ -11,7 +11,7 @@ import (
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 
-	"qarz/internal/loan"
+	"github.com/KhizerRehan/qarz-cli/internal/loan"
 )
 
 type Google struct {

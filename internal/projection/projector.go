@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"qarz/internal/loan"
-	"qarz/internal/store"
+	"github.com/KhizerRehan/qarz-cli/internal/loan"
+	"github.com/KhizerRehan/qarz-cli/internal/store"
 )
 
 var ErrPending = errors.New("the calendar was not updated")

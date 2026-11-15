@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"qarz/internal/loan"
+	"github.com/KhizerRehan/qarz-cli/internal/loan"
 )
 
 func mustDate(t *testing.T, s string) loan.Date {

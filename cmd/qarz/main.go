@@ -7,11 +7,11 @@ import (
 	"os"
 	"time"
 
-	"qarz/internal/cli"
-	"qarz/internal/config"
-	"qarz/internal/gauth"
-	"qarz/internal/projection"
-	"qarz/internal/store"
+	"github.com/KhizerRehan/qarz-cli/internal/cli"
+	"github.com/KhizerRehan/qarz-cli/internal/config"
+	"github.com/KhizerRehan/qarz-cli/internal/gauth"
+	"github.com/KhizerRehan/qarz-cli/internal/projection"
+	"github.com/KhizerRehan/qarz-cli/internal/store"
 )
 
 func main() {

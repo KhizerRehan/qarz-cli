@@ -3,8 +3,8 @@ package cli
 import (
 	"fmt"
 
-	"qarz/internal/loan"
-	"qarz/internal/store"
+	"github.com/KhizerRehan/qarz-cli/internal/loan"
+	"github.com/KhizerRehan/qarz-cli/internal/store"
 )
 
 func (a *App) describeStatus(row store.LoanRow) string {
