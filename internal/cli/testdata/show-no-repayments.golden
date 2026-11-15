@@ -1,0 +1,11 @@
+loan 1
+  borrower   Ali
+  principal  50,000 PKR
+  repaid     0 PKR
+  balance    50,000 PKR
+  status     open
+  lent on    2026-11-10
+  due on     2026-12-20
+  note       bike repair
+  details    purpose=bike via=cash
+  repayments: none yet

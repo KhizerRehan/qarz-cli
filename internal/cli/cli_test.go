@@ -251,7 +251,7 @@ func TestUnknownLoanIsRejected(t *testing.T) {
 func TestListFilters(t *testing.T) {
 	h := newHarness(t)
 	h.mustRun("add", "--to", "Ali", "--amount", "50000", "--due", "2026-12-20")
-	h.mustRun("add", "--to", "Sara", "--amount", "80000", "--due", "2026-12-03")
+	h.mustRun("add", "--to", "Sara", "--amount", "80000", "--due", "2026-12-03", "--lent-on", "2026-11-10")
 	h.mustRun("add", "--to", "Imran", "--amount", "12000", "--due", "2026-12-20")
 	h.mustRun("repay", "3", "--amount", "12000")
 
@@ -289,7 +289,7 @@ func TestEmptyListSaysSo(t *testing.T) {
 func TestListGolden(t *testing.T) {
 	h := newHarness(t)
 	h.mustRun("add", "--to", "Ali", "--amount", "50000", "--due", "2026-12-20")
-	h.mustRun("add", "--to", "Sara", "--amount", "80000", "--due", "2026-12-03")
+	h.mustRun("add", "--to", "Sara", "--amount", "80000", "--due", "2026-12-03", "--lent-on", "2026-11-10")
 	h.mustRun("repay", "1", "--amount", "20000")
 
 	assertGolden(t, "list-open", h.mustRun("list"))
