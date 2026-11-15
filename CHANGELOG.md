@@ -11,9 +11,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `qarz add` to record a loan, with an optional lending date, note and repeatable `--meta key=value` details.
 - `qarz repay` to record repayments, refusing any that exceed the balance and marking a loan paid when repayments reach the principal.
 - `qarz list` with `--overdue`, `--paid` and `--all` filters, and `qarz show` for one loan and its repayment history.
-- One-way projection of every loan onto Google Calendar as a single event that tracks its open, overdue and paid states.
-- `qarz sync` to push calendar events left pending while Google was unreachable.
-- `qarz setup` to walk the one-time Google Cloud and OAuth setup and write `~/.qarz/config.toml`.
 - `qarz --version`.
 
 [Unreleased]: https://github.com/KhizerRehan/qarz-cli/commits/main

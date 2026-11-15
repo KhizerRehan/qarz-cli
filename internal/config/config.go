@@ -10,22 +10,19 @@ import (
 )
 
 const (
-	DefaultCalendarID = "primary"
-	DefaultTimezone   = "Asia/Karachi"
-	DefaultCurrency   = "PKR"
+	DefaultTimezone = "Asia/Karachi"
+	DefaultCurrency = "PKR"
 )
 
 type Config struct {
-	CalendarID string `toml:"calendar_id"`
-	Timezone   string `toml:"timezone"`
-	Currency   string `toml:"currency"`
+	Timezone string `toml:"timezone"`
+	Currency string `toml:"currency"`
 }
 
 func Default() Config {
 	return Config{
-		CalendarID: DefaultCalendarID,
-		Timezone:   DefaultTimezone,
-		Currency:   DefaultCurrency,
+		Timezone: DefaultTimezone,
+		Currency: DefaultCurrency,
 	}
 }
 
@@ -42,10 +39,8 @@ func Dir() (string, error) {
 	return dir, nil
 }
 
-func LedgerPath() (string, error)      { return pathIn("qarz.db") }
-func ConfigPath() (string, error)      { return pathIn("config.toml") }
-func CredentialsPath() (string, error) { return pathIn("credentials.json") }
-func TokenPath() (string, error)       { return pathIn("token.json") }
+func LedgerPath() (string, error) { return pathIn("qarz.db") }
+func ConfigPath() (string, error) { return pathIn("config.toml") }
 
 func pathIn(name string) (string, error) {
 	dir, err := Dir()
@@ -71,32 +66,14 @@ func Load() (Config, error) {
 	}
 
 	if err := toml.Unmarshal(raw, &cfg); err != nil {
-		return Config{}, fmt.Errorf("read %s: %w (fix it, or delete it and run 'qarz setup')", path, err)
+		return Config{}, fmt.Errorf("read %s: %w (fix it, or delete it to use the defaults)", path, err)
 	}
 
 	return withDefaults(cfg), nil
 }
 
-func Save(cfg Config) error {
-	path, err := ConfigPath()
-	if err != nil {
-		return err
-	}
-
-	body := fmt.Sprintf("calendar_id = %q\ntimezone = %q\ncurrency = %q\n",
-		cfg.CalendarID, cfg.Timezone, cfg.Currency)
-
-	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
-		return fmt.Errorf("write %s: %w", path, err)
-	}
-	return nil
-}
-
 func withDefaults(cfg Config) Config {
 	defaults := Default()
-	if cfg.CalendarID == "" {
-		cfg.CalendarID = defaults.CalendarID
-	}
 	if cfg.Timezone == "" {
 		cfg.Timezone = defaults.Timezone
 	}

@@ -1,34 +1,28 @@
 package cli
 
 import (
-	"context"
 	"database/sql"
-	"errors"
-	"fmt"
 	"io"
 	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/KhizerRehan/qarz-cli/internal/loan"
-	"github.com/KhizerRehan/qarz-cli/internal/projection"
 )
 
 type App struct {
-	DB        *sql.DB
-	Projector *projection.Projector
-	Now       func() time.Time
-	Currency  string
-	Version   string
-	In        io.Reader
-	Out       io.Writer
-	Err       io.Writer
+	DB       *sql.DB
+	Now      func() time.Time
+	Currency string
+	Version  string
+	Out      io.Writer
+	Err      io.Writer
 }
 
 func NewRootCommand(app *App) *cobra.Command {
 	root := &cobra.Command{
 		Use:           "qarz",
-		Short:         "A ledger for interest-free loans, projected onto your calendar",
+		Short:         "A ledger for interest-free loans you have made",
 		Version:       app.Version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -40,8 +34,6 @@ func NewRootCommand(app *App) *cobra.Command {
 		newListCommand(app),
 		newRepayCommand(app),
 		newShowCommand(app),
-		newSetupCommand(app),
-		newSyncCommand(app),
 	)
 	return root
 }
@@ -52,18 +44,4 @@ func (a *App) today() loan.Date {
 
 func (a *App) money(m loan.Minor) string {
 	return m.WithCurrency(a.Currency)
-}
-
-func (a *App) project(ctx context.Context, loanID int64) error {
-	if a.Projector == nil {
-		fmt.Fprintln(a.Err, "warning: not signed in to Google, so no calendar event was made (run 'qarz setup')")
-		return nil
-	}
-
-	err := a.Projector.Project(ctx, loanID)
-	if errors.Is(err, projection.ErrPending) {
-		fmt.Fprintf(a.Err, "warning: recorded, but the calendar event is pending (run 'qarz sync'): %v\n", err)
-		return nil
-	}
-	return err
 }

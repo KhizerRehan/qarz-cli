@@ -69,7 +69,6 @@ func newAddCommand(app *App) *cobra.Command {
 				DueOn:          dueOn,
 				Note:           note,
 				Metadata:       metadata,
-				SyncState:      loan.SyncPendingCreate,
 			}, app.Now())
 			if err != nil {
 				return err
@@ -77,8 +76,7 @@ func newAddCommand(app *App) *cobra.Command {
 
 			fmt.Fprintf(app.Out, "loan %d recorded: %s owes %s by %s\n",
 				id, borrower, app.money(principal), dueOn)
-
-			return app.project(cmd.Context(), id)
+			return nil
 		},
 	}
 

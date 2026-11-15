@@ -52,9 +52,6 @@ func newShowCommand(app *App) *cobra.Command {
 			if len(row.Loan.Metadata) > 0 {
 				fmt.Fprintf(w, "  details\t%s\n", formatDetails(row.Loan.Metadata))
 			}
-			if row.Loan.CalendarEventID != "" {
-				fmt.Fprintf(w, "  event\t%s\n", row.Loan.CalendarEventID)
-			}
 			if err := w.Flush(); err != nil {
 				return err
 			}

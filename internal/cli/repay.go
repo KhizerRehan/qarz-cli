@@ -66,8 +66,7 @@ func newRepayCommand(app *App) *cobra.Command {
 				fmt.Fprintf(app.Out, "loan %d: %s repaid %s, %s still owed\n",
 					id, row.Loan.Borrower, app.money(paid), app.money(remaining))
 			}
-
-			return app.project(cmd.Context(), id)
+			return nil
 		},
 	}
 

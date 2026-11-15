@@ -1,6 +1,6 @@
 # Qarz
 
-A personal ledger for interest-free loans you have made to other people, projected one-way onto Google Calendar so that due dates arrive as reminders rather than as something you have to remember to check.
+A personal ledger for interest-free loans you have made to other people, kept locally on your own machine.
 
 ## Language
 
@@ -35,7 +35,3 @@ _Avoid_: Settled, closed, cleared, complete
 **Overdue**:
 An open loan whose due date has already passed.
 _Avoid_: Late, defaulted, delinquent
-
-**Projection**:
-The one-way push of a loan's current state onto Google Calendar as a single event. The ledger is the only authority; the calendar is never read back as truth.
-_Avoid_: Sync (as a noun for the data relationship), mirror, two-way sync

@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting. Please do not paste the contents of `~/.qarz/credentials.json`, `~/.qarz/token.json` or your ledger. For security issues, use the private report described in SECURITY.md instead.
+        Thanks for reporting. Please do not paste the contents of your ledger (`~/.qarz/qarz.db`). For security issues, use the private report described in SECURITY.md instead.
   - type: textarea
     id: what-happened
     attributes:
@@ -42,14 +42,5 @@ body:
     attributes:
       label: Operating system
       options: [macOS, Linux, Windows, Other]
-    validations:
-      required: true
-  - type: dropdown
-    id: calendar
-    attributes:
-      label: Is Google Calendar involved?
-      options:
-        - "No, ledger only"
-        - "Yes, signed in with qarz setup"
     validations:
       required: true

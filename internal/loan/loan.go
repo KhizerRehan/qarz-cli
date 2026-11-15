@@ -7,15 +7,6 @@ import (
 	"fmt"
 )
 
-type SyncState string
-
-const (
-	SyncSynced        SyncState = "synced"
-	SyncPendingCreate SyncState = "pending_create"
-	SyncPendingUpdate SyncState = "pending_update"
-	SyncPendingDelete SyncState = "pending_delete"
-)
-
 type Status string
 
 const (
@@ -26,17 +17,15 @@ const (
 )
 
 type Loan struct {
-	ID              int64
-	UID             string
-	Borrower        string
-	PrincipalMinor  Minor
-	LentOn          Date
-	DueOn           Date
-	Note            string
-	Metadata        map[string]string
-	VoidedAt        string
-	CalendarEventID string
-	SyncState       SyncState
+	ID             int64
+	UID            string
+	Borrower       string
+	PrincipalMinor Minor
+	LentOn         Date
+	DueOn          Date
+	Note           string
+	Metadata       map[string]string
+	VoidedAt       string
 }
 
 type Repayment struct {

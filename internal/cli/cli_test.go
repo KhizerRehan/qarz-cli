@@ -14,8 +14,6 @@ import (
 
 	"github.com/KhizerRehan/qarz-cli/internal/cli"
 	"github.com/KhizerRehan/qarz-cli/internal/loan"
-	"github.com/KhizerRehan/qarz-cli/internal/projection"
-	"github.com/KhizerRehan/qarz-cli/internal/projectiontest"
 	"github.com/KhizerRehan/qarz-cli/internal/store"
 )
 
@@ -26,19 +24,12 @@ const fixedToday = "2026-12-15"
 type harness struct {
 	t      *testing.T
 	db     *sql.DB
-	cal    *projectiontest.Fake
 	out    *bytes.Buffer
 	errOut *bytes.Buffer
 	now    time.Time
-	signed bool
 }
 
 func newHarness(t *testing.T) *harness {
-	t.Helper()
-	return newHarnessSignedIn(t, true)
-}
-
-func newHarnessSignedIn(t *testing.T, signed bool) *harness {
 	t.Helper()
 
 	path := filepath.Join(t.TempDir(), "qarz.db")
@@ -60,37 +51,10 @@ func newHarnessSignedIn(t *testing.T, signed bool) *harness {
 	return &harness{
 		t:      t,
 		db:     db,
-		cal:    projectiontest.NewFake(),
 		out:    &bytes.Buffer{},
 		errOut: &bytes.Buffer{},
 		now:    now,
-		signed: signed,
 	}
-}
-
-func (h *harness) projector() *projection.Projector {
-	if !h.signed {
-		return nil
-	}
-	return &projection.Projector{
-		DB:       h.db,
-		Calendar: h.cal,
-		Now:      func() time.Time { return h.now },
-		Currency: "PKR",
-	}
-}
-
-func (h *harness) warnings() string {
-	return h.errOut.String()
-}
-
-func (h *harness) onlyEvent() projection.Event {
-	h.t.Helper()
-	events := h.cal.Events()
-	if len(events) != 1 {
-		h.t.Fatalf("calendar holds %d events, want exactly 1: %+v", len(events), events)
-	}
-	return events[0]
 }
 
 func (h *harness) run(args ...string) (string, error) {
@@ -99,12 +63,11 @@ func (h *harness) run(args ...string) (string, error) {
 	h.errOut.Reset()
 
 	root := cli.NewRootCommand(&cli.App{
-		DB:        h.db,
-		Projector: h.projector(),
-		Now:       func() time.Time { return h.now },
-		Currency:  "PKR",
-		Out:       h.out,
-		Err:       h.errOut,
+		DB:       h.db,
+		Now:      func() time.Time { return h.now },
+		Currency: "PKR",
+		Out:      h.out,
+		Err:      h.errOut,
 	})
 	root.SetArgs(args)
 
@@ -173,9 +136,6 @@ func TestAddRecordsLoanAndPrintsItsNumber(t *testing.T) {
 	}
 	if row.Loan.LentOn.String() != fixedToday {
 		t.Errorf("lent on = %s, want today (%s)", row.Loan.LentOn, fixedToday)
-	}
-	if row.Loan.SyncState != loan.SyncSynced {
-		t.Errorf("sync state = %q, want %q", row.Loan.SyncState, loan.SyncSynced)
 	}
 	if row.Loan.UID == "" {
 		t.Error("loan was recorded without a unique tag")
@@ -391,216 +351,5 @@ func TestRepaymentAgainstUnknownLoanIsRefusedByTheDatabase(t *testing.T) {
 	}
 	if errors.Is(err, store.ErrNotFound) {
 		t.Fatalf("expected a database constraint failure, got %v", err)
-	}
-}
-
-func TestAddProjectsTheLoanOntoTheCalendar(t *testing.T) {
-	h := newHarness(t)
-	h.mustRun("add", "--to", "Ali", "--amount", "50000", "--due", "2026-12-20", "--note", "bike repair")
-
-	event := h.onlyEvent()
-	if want := "Qarz: Ali — 50,000 PKR"; event.Title != want {
-		t.Errorf("title = %q, want %q", event.Title, want)
-	}
-	if event.Date.String() != "2026-12-20" {
-		t.Errorf("date = %s, want the due date", event.Date)
-	}
-	if !strings.Contains(event.Description, "bike repair") {
-		t.Errorf("description = %q, want it to carry the note", event.Description)
-	}
-	if event.Tag == "" {
-		t.Error("the event carries no tag")
-	}
-
-	row, err := store.GetLoan(context.Background(), h.db, 1, loan.DateOf(h.now))
-	if err != nil {
-		t.Fatalf("read back loan 1: %v", err)
-	}
-	if row.Loan.CalendarEventID != event.ID {
-		t.Errorf("stored event id = %q, want %q", row.Loan.CalendarEventID, event.ID)
-	}
-}
-
-func TestRepaymentRetitlesTheEventWithoutMakingASecondOne(t *testing.T) {
-	h := newHarness(t)
-	h.mustRun("add", "--to", "Ali", "--amount", "50000", "--due", "2026-12-20")
-	h.mustRun("repay", "1", "--amount", "20000")
-
-	event := h.onlyEvent()
-	if want := "Qarz: Ali — 30,000 PKR"; event.Title != want {
-		t.Errorf("title = %q, want %q", event.Title, want)
-	}
-	if h.cal.Creates != 1 {
-		t.Errorf("created %d events, want 1 for the life of the loan", h.cal.Creates)
-	}
-}
-
-func TestFinalRepaymentMarksTheEventPaidAndClearsReminders(t *testing.T) {
-	h := newHarness(t)
-	h.mustRun("add", "--to", "Ali", "--amount", "50000", "--due", "2026-12-20")
-	h.mustRun("repay", "1", "--amount", "50000")
-
-	event := h.onlyEvent()
-	if want := "[PAID] Qarz: Ali — 50,000 PKR"; event.Title != want {
-		t.Errorf("title = %q, want %q", event.Title, want)
-	}
-	if len(event.Reminders) != 0 {
-		t.Errorf("reminders = %v, want none on a paid loan", event.Reminders)
-	}
-}
-
-func TestOverdueLoanProjectsToTodayWithTheDayCount(t *testing.T) {
-	h := newHarness(t)
-	h.mustRun("add", "--to", "Sara", "--amount", "80000", "--due", "2026-12-03", "--lent-on", "2026-11-10")
-
-	event := h.onlyEvent()
-	if want := "[OVERDUE 12d] Qarz: Sara — 80,000 PKR"; event.Title != want {
-		t.Errorf("title = %q, want %q", event.Title, want)
-	}
-	if event.Date.String() != fixedToday {
-		t.Errorf("date = %s, want today (%s)", event.Date, fixedToday)
-	}
-
-	row, err := store.GetLoan(context.Background(), h.db, 1, loan.DateOf(h.now))
-	if err != nil {
-		t.Fatalf("read back loan 1: %v", err)
-	}
-	if row.Loan.DueOn.String() != "2026-12-03" {
-		t.Errorf("due date = %s, want it untouched at 2026-12-03", row.Loan.DueOn)
-	}
-}
-
-func TestACalendarFailureKeepsTheRecordAndWarns(t *testing.T) {
-	h := newHarness(t)
-	h.cal.Failure = errors.New("network is unreachable")
-
-	out, err := h.run("add", "--to", "Ali", "--amount", "50000", "--due", "2026-12-20")
-	if err != nil {
-		t.Fatalf("add should succeed despite the calendar failing: %v", err)
-	}
-	if !strings.Contains(out, "loan 1 recorded") {
-		t.Errorf("stdout = %q, want the loan to be reported as recorded", out)
-	}
-	if !strings.Contains(h.warnings(), "qarz sync") {
-		t.Errorf("warning = %q, want it to name the command that retries", h.warnings())
-	}
-
-	row, err := store.GetLoan(context.Background(), h.db, 1, loan.DateOf(h.now))
-	if err != nil {
-		t.Fatalf("read back loan 1: %v", err)
-	}
-	if row.Loan.SyncState != loan.SyncPendingCreate {
-		t.Errorf("sync state = %q, want %q", row.Loan.SyncState, loan.SyncPendingCreate)
-	}
-	if len(h.cal.Events()) != 0 {
-		t.Errorf("calendar holds events after a total failure: %+v", h.cal.Events())
-	}
-}
-
-func TestWithoutGoogleTheLedgerStillWorksAndSaysSo(t *testing.T) {
-	h := newHarnessSignedIn(t, false)
-
-	if _, err := h.run("add", "--to", "Ali", "--amount", "50000", "--due", "2026-12-20"); err != nil {
-		t.Fatalf("add without Google access: %v", err)
-	}
-	if !strings.Contains(h.warnings(), "qarz setup") {
-		t.Errorf("warning = %q, want it to point at setup", h.warnings())
-	}
-}
-
-func TestEventDescriptionCarriesTheWholeLoan(t *testing.T) {
-	h := newHarness(t)
-	h.mustRun("add", "--to", "Ali", "--amount", "50000", "--due", "2026-12-20",
-		"--lent-on", "2026-11-10", "--note", "bike repair",
-		"--meta", "purpose=bike", "--meta", "via=cash")
-	h.mustRun("repay", "1", "--amount", "20000")
-
-	description := h.onlyEvent().Description
-	for _, want := range []string{
-		"bike repair",
-		"principal: 50,000 PKR",
-		"repaid: 20,000 PKR",
-		"balance: 30,000 PKR",
-		"lent on: 2026-11-10",
-		"due on: 2026-12-20",
-		"loan: 1",
-		"purpose: bike",
-		"via: cash",
-	} {
-		if !strings.Contains(description, want) {
-			t.Errorf("description is missing %q:\n%s", want, description)
-		}
-	}
-}
-
-func TestSyncClearsWhatTheCalendarMissed(t *testing.T) {
-	h := newHarness(t)
-	h.cal.Failure = errors.New("network is unreachable")
-	h.mustRun("add", "--to", "Ali", "--amount", "50000", "--due", "2026-12-20")
-
-	h.cal.Failure = nil
-	out := h.mustRun("sync")
-	if !strings.Contains(out, "pushed 1 of 1") {
-		t.Errorf("sync printed %q, want it to report one pushed loan", out)
-	}
-
-	row, err := store.GetLoan(context.Background(), h.db, 1, loan.DateOf(h.now))
-	if err != nil {
-		t.Fatalf("read back loan 1: %v", err)
-	}
-	if row.Loan.SyncState != loan.SyncSynced {
-		t.Errorf("sync state = %q, want %q", row.Loan.SyncState, loan.SyncSynced)
-	}
-	if len(h.cal.Events()) != 1 {
-		t.Errorf("calendar holds %d events, want 1", len(h.cal.Events()))
-	}
-}
-
-func TestSyncWithNothingPendingSaysSo(t *testing.T) {
-	h := newHarness(t)
-	h.mustRun("add", "--to", "Ali", "--amount", "50000", "--due", "2026-12-20")
-
-	if out := h.mustRun("sync"); out != "nothing pending\n" {
-		t.Errorf("sync printed %q, want %q", out, "nothing pending\n")
-	}
-}
-
-func TestSyncReportsAStillFailingCalendarWithoutFailing(t *testing.T) {
-	h := newHarness(t)
-	h.cal.Failure = errors.New("network is unreachable")
-	h.mustRun("add", "--to", "Ali", "--amount", "50000", "--due", "2026-12-20")
-
-	out, err := h.run("sync")
-	if err != nil {
-		t.Fatalf("sync should not fail when the calendar is still unreachable: %v", err)
-	}
-	if !strings.Contains(out, "still pending") {
-		t.Errorf("sync printed %q, want it to name the loans still pending", out)
-	}
-}
-
-func TestSyncWithoutGoogleIsAnError(t *testing.T) {
-	h := newHarnessSignedIn(t, false)
-
-	if got := h.wantFailure("sync"); !strings.Contains(got, "qarz setup") {
-		t.Errorf("error = %q, want it to point at setup", got)
-	}
-}
-
-func TestAnInterruptedCreateDoesNotMakeASecondEvent(t *testing.T) {
-	h := newHarness(t)
-	h.mustRun("add", "--to", "Ali", "--amount", "50000", "--due", "2026-12-20")
-
-	if err := store.MarkSyncState(context.Background(), h.db, 1,
-		loan.SyncPendingCreate, "", h.now); err != nil {
-		t.Fatalf("simulate a lost event id: %v", err)
-	}
-
-	h.mustRun("sync")
-	if len(h.cal.Events()) != 1 {
-		t.Errorf("calendar holds %d events, want 1 found again by its tag", len(h.cal.Events()))
-	}
-	if h.cal.Creates != 1 {
-		t.Errorf("created %d events, want 1", h.cal.Creates)
 	}
 }

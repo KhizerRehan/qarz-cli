@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Before asking, please read "What qarz does not do" in the README. Interest, fees, two-way calendar sync and tracking money you owe are out of scope by design.
+        Before asking, please read "What qarz does not do" in the README. Interest, fees and tracking money you owe are out of scope by design.
   - type: textarea
     id: problem
     attributes:
