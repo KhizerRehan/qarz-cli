@@ -19,6 +19,7 @@ type App struct {
 	Projector *projection.Projector
 	Now       func() time.Time
 	Currency  string
+	Version   string
 	In        io.Reader
 	Out       io.Writer
 	Err       io.Writer
@@ -28,6 +29,7 @@ func NewRootCommand(app *App) *cobra.Command {
 	root := &cobra.Command{
 		Use:           "qarz",
 		Short:         "A ledger for interest-free loans, projected onto your calendar",
+		Version:       app.Version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}

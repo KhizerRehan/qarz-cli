@@ -14,6 +14,8 @@ import (
 	"github.com/KhizerRehan/qarz-cli/internal/store"
 )
 
+var version = "dev"
+
 func main() {
 	if err := run(); err != nil {
 		fmt.Fprintf(os.Stderr, "qarz: %v\n", err)
@@ -60,6 +62,7 @@ func run() error {
 		Projector: projector,
 		Now:       func() time.Time { return time.Now().In(location) },
 		Currency:  cfg.Currency,
+		Version:   version,
 		In:        os.Stdin,
 		Out:       os.Stdout,
 		Err:       os.Stderr,
