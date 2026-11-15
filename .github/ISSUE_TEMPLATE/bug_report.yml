@@ -1,0 +1,55 @@
+name: Bug report
+description: Something in qarz does not work as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please do not paste the contents of `~/.qarz/credentials.json`, `~/.qarz/token.json` or your ledger. For security issues, use the private report described in SECURITY.md instead.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Include the exact command you ran and its full output.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. qarz add --to Ali --amount 50000 --due 2026-12-15
+        2. qarz repay 1 --amount 60000
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: qarz version
+      description: Output of `qarz --version`
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [macOS, Linux, Windows, Other]
+    validations:
+      required: true
+  - type: dropdown
+    id: calendar
+    attributes:
+      label: Is Google Calendar involved?
+      options:
+        - "No, ledger only"
+        - "Yes, signed in with qarz setup"
+    validations:
+      required: true

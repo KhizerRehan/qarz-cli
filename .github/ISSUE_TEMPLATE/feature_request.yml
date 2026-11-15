@@ -1,0 +1,26 @@
+name: Feature request
+description: Suggest something qarz should do
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before asking, please read "What qarz does not do" in the README. Interest, fees, two-way calendar sync and tracking money you owe are out of scope by design.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do, and what gets in the way today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like
+      description: How the command, flag or output could look.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
