@@ -1,6 +1,8 @@
 /qarz
+/qarz.exe
 /qarz.db
 credentials.json
 token.json
-
+/dist/
+.DS_Store
 ai/
